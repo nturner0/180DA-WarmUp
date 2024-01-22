@@ -1,3 +1,11 @@
+# I used the code at https://docs.opencv.org/4.x/df/d9d/tutorial_py_colorspaces.html as a baseline
+# for capturing a video and filtering by color/thresholding, and the code at
+# https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html as a baseline for generating a 
+# bounding box based on contours.
+# I added a check to ensure there is at least one contour, and I find the largest contour and draw
+# a rectangle around that, assuming the largest contour will be the object we are trying to detect.
+# I altered the code to detect for a light blue notebook I was using.
+
 import numpy as np
 import cv2
 

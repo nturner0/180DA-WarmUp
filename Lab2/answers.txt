@@ -1,0 +1,24 @@
+1. I worked with Corwin to create a 2-person ping pong counter, with two clients. Using MQTT, communication
+between many clients is easily made possible. With a central server acting as the controller, coordination
+between many users is trivial. Additionally, direct peer to peer communication may be avoided in instances where it would
+not be favorable. A reasonable lag time would be around 80-100 ms (one way). I tested this in my pub_sub.py file,
+where I checked the time it took for a client ot publish to the server, another client to receive the message,
+then found the difference in time. This method of communication seems promising for our project, as we
+plan to have the Raspberry Pi acting as a central server, with many user subscribers.
+
+2. Yes, similar sounding words result in more errors, as expected. The shorter, one word phrases generally are
+more accurate, and background noise/music creates some interference.
+
+a. We plan to include a control scheme for our game using voice input and speech recognition. We will 
+keep the allowed phrases to one word, and the recording frame small, so as to try to minimize errors. 
+Additionally, we will avoid similar sounding words to avoid misinterpretation.
+
+b. Our speech recognition does not need to be very complex - simply detecting one word phrases and
+classifying as one of the allowed words is sufficient. We may add an ability to allow similar
+sounding words (i.e. detected "cleft" is accepted as "left" for a command).
+
+c. We need very accurate recognition, so maintaining simplicity and correcting errors is a must. If
+the program misinterprets the user, the wrong move will be made.
+
+d. As long as the microphone is relatively close to the user, and the background noise does not drown
+out their speech, the program should work as expected.

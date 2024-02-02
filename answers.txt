@@ -1,0 +1,6 @@
+For our project, we plan to have two unique interfaces. One will be client end, for as many users
+as needed. This will display to the player different menus to select their mode of input, as
+well as their input move and windows for recording gestures or speech. On the main end, we
+will display the game (Pokemon, Street Fighter, etc.), as well as the last ~5 or so moves that
+players have made. For the graphics, we will use an image of the game, so we will only
+need to overlay the additional information, for which the PyGame will work well enough.

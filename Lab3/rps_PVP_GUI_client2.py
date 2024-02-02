@@ -1,5 +1,43 @@
 import pygame
-import random
+import paho.mqtt.client as mqtt
+
+#define MQTT functions
+
+def on_connect(client, userdata, flags, rc):
+    print("Connection returned result: " + str(rc))
+    client.subscribe("ece180d/test/ahh/server2", qos=1)
+
+def on_disconnect(client, userdata, rc):
+    if rc != 0:
+        print("Unexpected Disconnect")
+    else:
+        print("Expected Disconnect")
+                
+def on_message(client, userdata, message):
+    global my_wins
+    global opp_wins
+    global result_text
+    global sent_move
+    sent_move = False
+
+    payload = message.payload.decode()
+
+    if (payload == '0'):
+        result_text = "tied!"
+    elif (payload == '2'):
+        my_wins += 1
+        result_text = "won!"
+    else:
+        opp_wins += 1
+        result_text = "lost!"
+
+#create MQTT client
+client = mqtt.Client()
+client.on_connect = on_connect
+client.on_disconnect = on_disconnect
+client.on_message = on_message
+client.connect_async("mqtt.eclipseprojects.io")
+client.loop_start()
 
 pygame.init()
 
@@ -36,23 +74,16 @@ CIRC_COLORS = [GREEN, PURPLE, ORANGE]
 
 screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
 
+#globals
+my_wins = 0
+opp_wins = 0
+
+sent_move = False
 move_input = False
 move_text_constant = "You played:"
 move_text = ""
 result_text = ""
-player_move = -1
-score = [0, 0]
-
-def play_RPS(player_move):
-    move_list = [0, 1, 2]
-    computer_move = random.choice(move_list)
-
-    if(computer_move == 0):
-        return 0 #tie
-    elif(computer_move == 1):
-        return -1 #loss
-    else:
-        return 1 #win
+sent_move = False
 
 running = True
 while running:
@@ -61,28 +92,21 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONUP:
+            if (sent_move):  #already moved, waiting for opponent
+                continue
             pos = pygame.mouse.get_pos()
             if (abs(pos[0] - centers[0][0]) < CIRC_RADIUS and abs(pos[1] - centers[0][1]) < CIRC_RADIUS):
                 move_text = "Rock"
-                player_move = 1
+                sent_move = True
+                client.publish("ece180d/test/ahh/client2", '2r', qos=1)
             if (abs(pos[0] - centers[1][0]) < CIRC_RADIUS and abs(pos[1] - centers[1][1]) < CIRC_RADIUS):
                 move_text = "Paper"
-                player_move = 2
+                sent_move = True
+                client.publish("ece180d/test/ahh/client2", '2p', qos=1)
             if (abs(pos[0] - centers[2][0]) < CIRC_RADIUS and abs(pos[1] - centers[2][1]) < CIRC_RADIUS):
                 move_text = "Scissors"
-                player_move = 3
-    
-    if (player_move != -1):
-        result = play_RPS(player_move)
-        if (result == -1):
-            result_text = "lost!"
-            score[1] += 1
-        elif (result == 0):
-            result_text = "tied!"
-        else:
-            result_text = "won!"
-            score[0] += 1
-        player_move = -1
+                sent_move = True
+                client.publish("ece180d/test/ahh/client2", '2s', qos=1)
 
     # Fill the background with white
     screen.fill(WHITE)
@@ -121,7 +145,7 @@ while running:
     screen.blit(text_move, text_rect_move)
 
     #Score info
-    text_score = font.render("You " + str(score[0]) + " - " + str(score[1]) + " Opponent", True, BLACK, WHITE)
+    text_score = font.render("You " + str(my_wins) + " - " + str(opp_wins) + " Opponent", True, BLACK, WHITE)
     text_result = font.render("You " + result_text, True, BLACK, WHITE)
     text_rect_score = text_score.get_rect()
     text_rect_result = text_result.get_rect()
@@ -131,9 +155,13 @@ while running:
     screen.blit(text_result, text_rect_result)
     
     
-
-    # Flip the display
     pygame.display.flip()
 
-# Done! Time to quit.
+
+#Send a quit message to server
+client.publish("ece180d/test/ahh/client2", '2q', qos=1)
+
+#Close everything
 pygame.quit()
+client.loop_stop()
+client.disconnect()

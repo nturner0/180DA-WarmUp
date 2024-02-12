@@ -1,0 +1,22 @@
+Note: The Raspberry Pi has its own OS, so can run Python itself (rather than running MQTT via serial communication). We collected IMU data using an Arduino Nano 33 IOT.
+
+3.2. There is quite a bit of lag if we send constant data to the computer. By limiting the obvervation/transmission rate, we can eliminate the lag, at the cost of sampling frequency. If we process on-board, then transmit only
+interesting events, this would eliminate the lag and allow for a higher sampling frequency, as the transimission line would not become overwhelmed by a constant stream of sensor data. We could also decrease the size of data transmission,
+to avoid overloading the channel.
+
+4.1. The +z direction is downwards, in the direction of gravity. Yes, the gravity acceleration is seen when idle, as expected.
+
+4.2. The idle IMU looks like (~0, ~0, ~+1), for coordinates (x, y, z). We did not observe drift in the values while idle. However, there were fluctuations in the data, so using exact value comparisons would not work well.
+By checking if |x| < 0.02, |y| < 0.02, and 0.97 < z < 1.03, we were able to obtain an error rate of 0% for a binary classification on whether or not the IMU is idle.
+
+4.3. We can build a simple decision tree to perform this classification. Accelerations of x < -0.2 and 0.7 < z < 1.3 classifies a push forwards, and z < 0.7 classifies a lift (upwards).
+When classifying more than just the binary idle classification from before, we relax the idle thresholds on |x| and |y| to < 0.1.
+
+4.4. Since the movement is rotational in nature, the same features will not suffice (only the cartesian accelerations of (x,y,z)). Circular movement is not as instant as a push or a lift, so we must
+track the hsitory of the data for classification. Using only a decision tree, we could not accurately classify a circular motion. A simple neural network could be implemented and trained to determine a circular motion, and this could
+be ensembled with our decision tree to perform the overall classification. Alternatively, we could avoid the issue altogether by replacing this gesture with a linear one, i.e. a drop down or a push to the side instead.
+
+4.2 As shown in idle.png, the idle position is characterized by 0 accleration in the X and Y direction, +1 acceleration in the Z direction, and the values do not drift. 
+The gyro data still fluctuates, so it is not a great idea to classify the idle state using gyro data. 
+Thus we can classify the idle state by ensuring the magnitude of acceleration in both X and Y is under 0.02, and the acceleration in Z is between 1.03 and 0.97. 
+Using this classification, we get a 0% error rate, in which all idle states are classified as idle, and all non-idle states are classified as non-idle.
